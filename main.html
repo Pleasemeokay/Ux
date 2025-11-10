@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediTracker - Advanced Health Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes slide-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes bounce-in {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8), 0 0 80px rgba(139, 92, 246, 0.5); }
+        }
+        @keyframes matrix-rain {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        .float { animation: float 6s ease-in-out infinite; }
+        .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+        .gradient-animate { 
+            background: linear-gradient(270deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 800% 800%;
+            animation: gradient-shift 10s ease infinite;
+        }
+        .slide-in { animation: slide-in 0.8s ease-out forwards; }
+        .bounce-in { animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+        .glow-effect { animation: glow 3s ease-in-out infinite; }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+        }
+        .card-3d:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(5deg);
+        }
+        
+        .data-shield { 
+            user-select: none; 
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .matrix-char {
+            position: absolute;
+            color: rgba(0, 255, 150, 0.5);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            animation: matrix-rain linear infinite;
+        }
+        
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.8),
+                         0 0 20px rgba(99, 102, 241, 0.6),
+                         0 0 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .hologram {
+            position: relative;
+            overflow: hidden;
+        }
+        .hologram::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: scan 3s linear infinite;
+        }
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .hex-pattern {
+            background-image: 
+                linear-gradient(30deg, rgba(99, 102, 241, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(99, 102, 241, 0.05) 87.5%, rgba(99, 102, 241, 0.05)),
+                linear-gradient(150deg, rgba(99, 102, 241, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(99, 102, 241, 0.05) 87.5%, rgba(99, 102, 241, 0.05)),
+                linear-gradient(30deg, rgba(99, 102, 241, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(99, 102, 241, 0.05) 87.5%, rgba(99, 102, 241, 0.05)),
+                linear-gradient(150deg, rgba(99, 102, 241, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(99, 102, 241, 0.05) 87.5%, rgba(99, 102, 241, 0.05));
+            background-size: 80px 140px;
+            background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen overflow-x-hidden relative hex-pattern">
+    
+    <!-- Particle Canvas Background -->
+    <canvas id="particleCanvas"></canvas>
+    
+    <!-- Animated Grid Background -->
+    <div class="fixed inset-0 opacity-10 pointer-events-none z-0">
+        <div class="absolute inset-0" style="
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-move 20s linear infinite;
+        "></div>
+    </div>
+    
+    <style>
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+    </style>
+
+    <!-- Main Container -->
+    <div class="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- Futuristic Header -->
+        <header class="mb-8">
+            <div class="glass-morphism rounded-3xl p-6 shadow-2xl glow-effect hologram">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center space-x-4 slide-in" style="animation-delay: 0.1s;">
+                        <div class="relative">
+                            <!-- Pulsing Rings -->
+                            <div class="absolute inset-0 rounded-2xl bg-blue-500 opacity-50 pulse-ring"></div>
+                            <div class="absolute inset-0 rounded-2xl bg-purple-500 opacity-50 pulse-ring" style="animation-delay: 0.5s;"></div>
+                            
+                            <div class="relative gradient-animate p-4 rounded-2xl float">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold neon-text">MediTracker</h1>
+                            <p class="text-sm text-blue-400">Advanced Health Analytics System</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 slide-in" style="animation-delay: 0.3s;">
+                        <!-- Live Time Display -->
+                        <div class="glass-morphism rounded-2xl px-6 py-3 flex items-center space-x-3">
+                            <div class="relative">
+                                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-ping absolute"></div>
+                                <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                            </div>
+                            <span id="liveTime" class="font-mono text-lg data-shield"></span>
+                        </div>
+                        
+                        <!-- Notification Bell -->
+                        <button class="glass-morphism rounded-2xl p-3 hover:bg-white/10 transition relative group">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center bounce-in">3</span>
+                        </button>
+                        
+                        <!-- User Avatar -->
+                        <div class="glass-morphism rounded-2xl p-1 hover:bg-white/10 transition cursor-pointer">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold">
+                                JD
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 3D Stats Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- Animated Health Score Circle -->
+            <div class="glass-morphism rounded-3xl p-6 card-3d bounce-in" style="animation-delay: 0.1s;">
+                <h3 class="text-sm font-semibold text-gray-400 mb-4">HEALTH SCORE</h3>
+                <div class="relative flex items-center justify-center">
+                    <svg class="w-40 h-40 transform -rotate-90">
+                        <defs>
+                            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981"/>
+                                <stop offset="50%" style="stop-color:#3b82f6"/>
+                                <stop offset="100%" style="stop-color:#8b5cf6"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="80" cy="80" r="70" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none"/>
+                        <circle id="scoreCircle" cx="80" cy="80" r="70" stroke="url(#scoreGradient)" stroke-width="8" fill="none" 
+                                stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round"
+                                style="transition: stroke-dashoffset 2s ease;"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="scoreValue" class="text-5xl font-bold neon-text data-shield">0</span>
+                        <span class="text-sm text-gray-400">/ 100</span>
+                        <span class="text-xs text-emerald-400 font-semibold mt-1">EXCELLENT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Animated Heart Rate -->
+            <div class="glass-morphism rounded-3xl p-6 card-3d bounce-in" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">HEART RATE</h3>
+                    <div class="bg-rose-500/20 p-2 rounded-xl">
+                        <svg class="w-5 h-5 text-rose-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-end space-x-2 mb-3">
+                    <span id="heartRate" class="text-4xl font-bold neon-text data-shield">72</span>
+                    <span class="text-gray-400 mb-1">BPM</span>
+                </div>
+                <!-- Mini Heart Rate Graph -->
+                <div class="h-16 flex items-end space-x-1">
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 60%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 80%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 70%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 90%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 75%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t" style="height: 85%;"></div>
+                    <div class="flex-1 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t glow-effect" style="height: 100%;"></div>
+                </div>
+                <p class="text-xs text-emerald-400 mt-2">↑ 2% from average</p>
+            </div>
+
+            <!-- Blood Pressure Monitor -->
+            <div class="glass-morphism rounded-3xl p-6 card-3d bounce-in" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">BLOOD PRESSURE</h3>
+                    <div class="bg-blue-500/20 p-2 rounded-xl">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-end space-x-2 mb-3">
+                    <span class="text-4xl font-bold neon-text data-shield">120</span>
+                    <span class="text-2xl font-bold text-gray-400">/</span>
+                    <span class="text-4xl font-bold neon-text data-shield">80</span>
+                </div>
+                <div class="flex space-x-2 mb-2">
+                    <div class="flex-1 h-2 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full"></div>
+                </div>
+                <p class="text-xs text-emerald-400">Normal Range</p>
+            </div>
+
+            <!-- Activity Streak -->
+            <div class="glass-morphism rounded-3xl p-6 card-3d bounce-in" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-400">STREAK</h3>
+                    <div class="bg-amber-500/20 p-2 rounded-xl">
+                        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-end space-x-2 mb-3">
+                    <span class="text-5xl font-bold gradient-animate bg-clip-text text-transparent data-shield">14</span>
+                    <span class="text-gray-400 mb-2">days</span>
+                </div>
+                <div class="flex space-x-1">
+                    <div class="w-6 h-6 rounded bg-emerald-500 glow-effect"></div>
+                    <div class="w-6 h-6 rounded bg-emerald-500"></div>
+                    <div class="w-6 h-6 rounded bg-emerald-500"></div>
+                    <div class="w-6 h-6 rounded bg-emerald-500"></div>
+                    <div class="w-6 h-6 rounded bg-gray-700"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Chart -->
+        <div class="glass-morphism rounded-3xl p-6 mb-8 card-3d slide-in hologram">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold neon-text">WEEKLY HEALTH ANALYTICS</h3>
+                <div class="flex space-x-2">
+                    <button class="glass-morphism px-4 py-2 rounded-xl text-sm hover:bg-white/10 transition">7D</button>
+                    <button class="glass-morphism px-4 py-2 rounded-xl text-sm bg-blue-500/20 text-blue-400">30D</button>
+                    <button class="glass-morphism px-4 py-2 rounded-xl text-sm hover:bg-white/10 transition">90D</button>
+                </div>
+            </div>
+            <canvas id="healthChart" height="80"></canvas>
+        </div>
+
+        <!-- Medication Schedule with 3D Cards -->
+        <div class="glass-morphism rounded-3xl p-6 mb-8 hologram">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold neon-text">TODAY'S MEDICATIONS</h3>
+                <button class="glass-morphism px-4 py-2 rounded-xl text-sm hover:bg-white/10 transition flex items-center space-x-2">
+                    <span>View All</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Med Card 1 -->
+                <div class="glass-morphism rounded-2xl p-6 card-3d hover:bg-white/5 transition relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                    <div class="relative">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="bg-emerald-500/20 p-3 rounded-xl">
+                                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold">TAKEN</span>
+                        </div>
+                        <h4 class="text-xl font-bold mb-2 data-shield">Lisinopril</h4>
+                        <p class="text-gray-400 text-sm mb-3">10mg tablet</p>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-gray-400">08:00 AM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Med Card 2 -->
+                <div class="glass-morphism rounded-2xl p-6 card-3d hover:bg-white/5 transition relative overflow-hidden glow-effect">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pulse-ring"></div>
+                    <div class="relative">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="bg-blue-53.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <span class="font-semibold">Settings</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Notification -->
+    <div id="notification" class="fixed bottom-8 right-8 glass-morphism rounded-2xl p-5 shadow-2xl max-w-sm transform translate-x-96 transition-all duration-500 z-50">
+        <div class="flex items-start space-x-4">
+            <div class="bg-blue-500/20 p-3 rounded-xl flex-shrink-0 pulse-ring">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <p class="font-semibold mb-1">Medication Reminder</p>
+                <p class="text-sm text-gray-400">Metformin 500mg in 30 minutes</p>
+                <button class="mt-3 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-xl text-sm font-semibold transition">
+                    Set Reminder
+                </button>
+            </div>
+            <button onclick="hideNotification()" class="text-gray-400 hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // ============ NOTIFICATION SYSTEM ============
+        setTimeout(() => {
+            if (isHumanUser()) {
+                showNotification();
+            }
+        }, 4000);
+
+        function showNotification() {
+            document.getElementById('notification').style.transform = 'translateX(0)';
+        }
+
+        function hideNotification() {
+            document.getElementById('notification').style.transform = 'translateX(500px)';
+        }
+
+        // Auto-hide notification after 10 seconds
+        setTimeout(() => {
+            hideNotification();
+        }, 14000);
+
+        // ============ 3D CARD TILT EFFECT ============
+        document.querySelectorAll('.card-3d').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+            });
+        });
+
+        // ============ DYNAMIC DATA OBFUSCATION ============
+        setInterval(() => {
+            if (!isHumanUser()) {
+                document.querySelectorAll('.data-shield').forEach(el => {
+                    if (Math.random() > 0.9) {
+                        const originalText = el.textContent;
+                        el.textContent = '***';
+                        setTimeout(() => {
+                            el.textContent = originalText;
+                        }, 150);
+                    }
+                });
+            }
+        }, 5000);
+
+        // ============ PERFORMANCE MONITORING ============
+        console.log('%c⚡ MediTracker Performance Stats', 'color: cyan; font-size: 14px; font-weight: bold;');
+        console.log('Session ID:', securitySession.id);
+        console.log('Loaded at:', new Date().toISOString());
+    </script>
+</body>
+</html>
